@@ -1,0 +1,132 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'react-toastify/dist/ReactToastify.css';
+
+:root {
+  --im-bg-primary: #0b0c10;
+  --im-bg-surface: #14161d;
+  --im-bg-card: #1a1d26;
+  --im-bg-card-hover: #222634;
+  --im-red: #e50914;
+  --im-red-hover: #f40612;
+  --im-red-subtle: rgba(229, 9, 20, 0.15);
+  --im-gold: #ffb703;
+  --im-text-primary: #ffffff;
+  --im-text-secondary: #9aa0a6;
+  --im-text-muted: #6c757d;
+  --im-border: #2b3040;
+  --im-seat-available: #2c3243;
+  --im-seat-selected: #e50914;
+  --im-seat-booked: #495057;
+  --im-seat-vip: #8a3ffc;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--im-bg-primary);
+  color: var(--im-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0c10;
+}
+::-webkit-scrollbar-thumb {
+  background: #2b3040;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #e50914;
+}
+
+/* Link Resets */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Custom Buttons */
+.btn-imovies {
+  background: linear-gradient(135deg, #e50914 0%, #b20710 100%);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.35);
+}
+
+.btn-imovies:hover {
+  background: linear-gradient(135deg, #ff1e27 0%, #d10813 100%);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(229, 9, 20, 0.5);
+}
+
+.btn-imovies:active {
+  transform: translateY(0);
+}
+
+.btn-imovies-outline {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.btn-imovies-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: #fff;
+}
+
+/* Card Styling */
+.im-card {
+  background-color: var(--im-bg-card);
+  border: 1px solid var(--im-border);
+  border-radius: 12px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
+}
+
+.im-card:hover {
+  border-color: rgba(229, 9, 20, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Badge Styling */
+.badge-genre {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.badge-rating {
+  background: rgba(255, 183, 3, 0.2);
+  color: var(--im-gold);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+}

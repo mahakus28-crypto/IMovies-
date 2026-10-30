@@ -1,0 +1,310 @@
+/* Global App Layout */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--im-bg-primary);
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Navbar */
+.navbar-imovies {
+  background-color: rgba(11, 12, 16, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--im-border);
+  padding: 0.8rem 0;
+  transition: all 0.3s ease;
+}
+
+.navbar-brand-logo {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+.navbar-brand-logo span {
+  color: var(--im-red);
+}
+
+.nav-link-custom {
+  color: var(--im-text-secondary);
+  font-weight: 500;
+  margin: 0 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.nav-link-custom:hover,
+.nav-link-custom.active {
+  color: #fff;
+}
+
+/* Hero Carousel / Banner */
+.hero-banner {
+  position: relative;
+  min-height: 480px;
+  background-size: cover;
+  background-position: center top;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 3rem;
+  margin-bottom: 2.5rem;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(11, 12, 16, 0.2) 0%, rgba(11, 12, 16, 0.95) 90%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 650px;
+}
+
+/* Movie Card */
+.movie-card {
+  background: var(--im-bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--im-border);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.movie-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(229, 9, 20, 0.5);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+.movie-poster-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 145%; /* 2:3 aspect ratio */
+  overflow: hidden;
+  background-color: #12141c;
+}
+
+.movie-poster-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.movie-card:hover .movie-poster-img {
+  transform: scale(1.05);
+}
+
+.movie-card-rating {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(11, 12, 16, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--im-gold);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 183, 3, 0.3);
+}
+
+.movie-card-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--im-red);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.movie-card-body {
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.movie-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+/* Seat Selection */
+.cinema-screen-container {
+  perspective: 450px;
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.cinema-screen-curved {
+  height: 18px;
+  width: 80%;
+  max-width: 550px;
+  margin: 0 auto 10px auto;
+  background: linear-gradient(90deg, rgba(229, 9, 20, 0.1), rgba(255, 255, 255, 0.9), rgba(229, 9, 20, 0.1));
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+  border-radius: 50% 50% 0 0;
+  transform: rotateX(-20deg);
+}
+
+.cinema-screen-label {
+  font-size: 0.8rem;
+  color: var(--im-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.seat-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.seat-row-label {
+  width: 28px;
+  font-weight: 600;
+  color: var(--im-text-secondary);
+  font-size: 0.85rem;
+  text-align: right;
+  margin-right: 8px;
+}
+
+.seat-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.seat-available {
+  background-color: var(--im-seat-available);
+  color: #d1d5db;
+  border: 1px solid #3b4256;
+}
+
+.seat-available:hover {
+  background-color: #3f4760;
+  border-color: #6366f1;
+  transform: scale(1.1);
+}
+
+.seat-vip {
+  background-color: #2e2646;
+  color: #c084fc;
+  border: 1px solid #7e22ce;
+}
+
+.seat-vip:hover {
+  background-color: #433363;
+  transform: scale(1.1);
+}
+
+.seat-selected {
+  background-color: var(--im-red) !important;
+  color: #ffffff !important;
+  border: 1px solid #ff4d58 !important;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.7);
+  transform: scale(1.08);
+}
+
+.seat-booked {
+  background-color: #242731 !important;
+  color: #4b5563 !important;
+  border: 1px solid #323746 !important;
+  cursor: not-allowed !important;
+  opacity: 0.45;
+}
+
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--im-bg-surface);
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--im-text-secondary);
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+/* Booking Summary Card */
+.order-summary-card {
+  background: var(--im-bg-surface);
+  border: 1px solid var(--im-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+/* Admin Dashboard Cards */
+.stat-card {
+  background: var(--im-bg-card);
+  border: 1px solid var(--im-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.25s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--im-red);
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
