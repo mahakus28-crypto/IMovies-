@@ -9,11 +9,12 @@ const MovieDetails = () => {
   const [theatresWithShows, setTheatresWithShows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showsLoading, setShowsLoading] = useState(false);
+  const [showTrailerModal, setShowTrailerModal] = useState(false);
 
-  // Generate 5 days starting today
+  // Generate 7 days starting today
   const generateDates = () => {
     const dates = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
       const iso = d.toISOString().split('T')[0];
@@ -59,6 +60,12 @@ const MovieDetails = () => {
 
     fetchShows();
   }, [id, selectedDate]);
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return '';
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : url;
+  };
 
   if (loading) {
     return (
@@ -136,14 +143,12 @@ const MovieDetails = () => {
               </div>
 
               {movie.trailerUrl && (
-                <a
-                  href={movie.trailerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => setShowTrailerModal(true)}
                   className="btn btn-imovies-outline me-3"
                 >
-                  <i className="bi bi-play-circle me-1"></i>Watch Trailer
-                </a>
+                  <i className="bi bi-play-circle fs-5 me-1 text-danger"></i>Watch Trailer
+                </button>
               )}
             </div>
           </div>
@@ -168,7 +173,7 @@ const MovieDetails = () => {
                   ? 'btn-danger shadow'
                   : 'btn-dark border border-secondary text-secondary'
               }`}
-              style={{ minWidth: '90px' }}
+              style={{ minWidth: '95px' }}
             >
               <div className="small fw-bold text-uppercase">{d.label}</div>
               <div className="fs-6 fw-semibold">{d.subLabel}</div>
@@ -241,6 +246,47 @@ const MovieDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Interactive Trailer Modal */}
+      {showTrailerModal && movie.trailerUrl && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(5px)' }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content bg-dark border border-secondary text-white">
+              <div className="modal-header border-secondary py-2">
+                <h6 className="modal-title fw-bold">
+                  <i className="bi bi-youtube text-danger me-2"></i>
+                  {movie.title} – Official Trailer
+                </h6>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowTrailerModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body p-0" style={{ position: 'relative', paddingTop: '56.25%' }}>
+                <iframe
+                  src={getYouTubeEmbedUrl(movie.trailerUrl)}
+                  title="Movie Trailer"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 0
+                  }}
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

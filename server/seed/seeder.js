@@ -36,22 +36,22 @@ const seedDatabase = async () => {
 
     console.log('Seeding Theatres...');
     const createdTheatres = await Theatre.insertMany(seedData.theatres);
-    console.log(`✓ ${createdTheatres.length} Theatres inserted`);
+    console.log(`✓ ${createdTheatres.length} Theatres inserted across Mumbai, Delhi NCR, and Bengaluru`);
 
     console.log('Seeding Movies...');
     const createdMovies = await Movie.insertMany(seedData.movies);
-    console.log(`✓ ${createdMovies.length} Movies inserted`);
+    console.log(`✓ ${createdMovies.length} Blockbuster Movies inserted`);
 
-    console.log('Generating Shows for the upcoming days...');
-    const showTimes = ['10:30 AM', '02:00 PM', '06:00 PM', '09:30 PM'];
-    const formats = ['2D', '3D', 'IMAX 3D', '4DX'];
-    const prices = [220, 280, 350, 420];
+    console.log('Generating dynamic show schedules for the next 7 days...');
+    const showTimes = ['09:45 AM', '01:15 PM', '04:45 PM', '08:15 PM', '10:30 PM'];
+    const formats = ['2D', '3D', 'IMAX 3D', '4DX', 'Dolby Atmos'];
+    const prices = [220, 280, 360, 420, 480];
 
     const showsToInsert = [];
     const nowShowingMovies = createdMovies.filter(m => m.status === 'now_showing');
 
-    // Generate shows for next 5 days
-    for (let dayOffset = 0; dayOffset < 5; dayOffset++) {
+    // Generate shows for next 7 days
+    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
       const d = new Date();
       d.setDate(d.getDate() + dayOffset);
       const dateStr = formatDate(d);
@@ -60,16 +60,26 @@ const seedDatabase = async () => {
         for (let mIdx = 0; mIdx < nowShowingMovies.length; mIdx++) {
           const movie = nowShowingMovies[mIdx];
           // Pick 2-3 showtimes per movie in this theatre
-          const times = [showTimes[mIdx % showTimes.length], showTimes[(mIdx + 2) % showTimes.length]];
+          const times = [
+            showTimes[mIdx % showTimes.length],
+            showTimes[(mIdx + 2) % showTimes.length]
+          ];
 
           times.forEach((time, tIdx) => {
             const format = formats[(mIdx + tIdx) % formats.length];
             const basePrice = prices[(mIdx + tIdx) % prices.length];
-            
-            // Pre-seed some booked seats on day 0 to showcase real seat status in the grid
+
+            // Add varied pre-booked seats to make the seat selection grid visually realistic
             let initialBookedSeats = [];
-            if (dayOffset === 0 && tIdx === 0) {
-              initialBookedSeats = ['A3', 'A4', 'B5', 'C5', 'C6', 'D7'];
+            if (dayOffset === 0) {
+              const seedBookings = [
+                ['A3', 'A4', 'B5', 'C4', 'C5', 'D6'],
+                ['B3', 'B4', 'C6', 'C7', 'E4', 'E5'],
+                ['A1', 'A2', 'C2', 'C3', 'D5', 'D6', 'F7']
+              ];
+              initialBookedSeats = seedBookings[(mIdx + tIdx) % seedBookings.length];
+            } else if (dayOffset === 1) {
+              initialBookedSeats = ['B4', 'B5', 'C5'];
             }
 
             showsToInsert.push({
@@ -92,11 +102,11 @@ const seedDatabase = async () => {
     const insertedShows = await Show.insertMany(showsToInsert);
     console.log(`✓ ${insertedShows.length} Shows scheduled and indexed`);
 
-    // Create a demo booking for the demo user on first show
+    // Create 1 Confirmed Booking for John Doe
     const sampleShow = insertedShows[0];
-    const bookingCode = `IMOV-${Date.now().toString().slice(-6)}-101`;
-    const demoBooking = await Booking.create({
-      bookingId: bookingCode,
+    const bookingCode1 = `IMOV-${Date.now().toString().slice(-6)}-101`;
+    const demoBooking1 = await Booking.create({
+      bookingId: bookingCode1,
       user: demoUser._id,
       show: sampleShow._id,
       movie: sampleShow.movie,
@@ -112,30 +122,71 @@ const seedDatabase = async () => {
       status: 'confirmed'
     });
 
-    const payment = await Payment.create({
-      booking: demoBooking._id,
+    const payment1 = await Payment.create({
+      booking: demoBooking1._id,
       user: demoUser._id,
-      amount: demoBooking.totalAmount,
+      amount: demoBooking1.totalAmount,
       paymentMethod: 'mock_card',
       paymentStatus: 'completed',
-      transactionId: `TXN-DEMO-${Date.now()}`
+      transactionId: `TXN-DEMO-${Date.now()}-101`
     });
 
-    demoBooking.payment = payment._id;
-    await demoBooking.save();
+    demoBooking1.payment = payment1._id;
+    await demoBooking1.save();
 
-    // Mark seats as booked in the show
     await Show.findByIdAndUpdate(sampleShow._id, {
       $push: { bookedSeats: { $each: ['B1', 'B2'] } }
     });
 
-    console.log(`✓ Sample booking created with code: ${bookingCode}`);
-    console.log('Database seeding successfully finished!');
-    process.exit(0);
+    // Create 1 Cancelled Booking for John Doe (to demonstrate refund & cancellation history)
+    const secondShow = insertedShows[1];
+    const bookingCode2 = `IMOV-${(Date.now() - 100000).toString().slice(-6)}-102`;
+    const demoBooking2 = await Booking.create({
+      bookingId: bookingCode2,
+      user: demoUser._id,
+      show: secondShow._id,
+      movie: secondShow.movie,
+      theatre: secondShow.theatre,
+      seats: ['D1'],
+      seatDetails: [
+        { seatNumber: 'D1', seatType: 'standard', price: secondShow.price }
+      ],
+      convenienceFee: 30,
+      taxAmount: Math.round(secondShow.price * 0.05),
+      totalAmount: secondShow.price + 30 + Math.round(secondShow.price * 0.05),
+      status: 'cancelled',
+      cancelledAt: new Date()
+    });
+
+    const payment2 = await Payment.create({
+      booking: demoBooking2._id,
+      user: demoUser._id,
+      amount: demoBooking2.totalAmount,
+      paymentMethod: 'mock_upi',
+      paymentStatus: 'refunded',
+      transactionId: `TXN-DEMO-${Date.now()}-102`
+    });
+
+    demoBooking2.payment = payment2._id;
+    await demoBooking2.save();
+
+    console.log(`✓ Sample Confirmed Booking: ${bookingCode1}`);
+    console.log(`✓ Sample Cancelled Booking: ${bookingCode2}`);
+    console.log('====================================================');
+    console.log('🎬 IMovies database seeding completed successfully!');
+    console.log('====================================================');
+    return { success: true, count: createdMovies.length };
   } catch (err) {
     console.error('Error seeding database:', err);
-    process.exit(1);
+    throw err;
   }
 };
 
-seedDatabase();
+// If run directly via CLI: node seed/seeder.js
+if (require.main === module) {
+  seedDatabase()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}
+
+module.exports = seedDatabase;

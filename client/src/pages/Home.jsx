@@ -8,6 +8,7 @@ const Home = () => {
   const [upcoming, setUpcoming] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTrailerUrl, setActiveTrailerUrl] = useState(null);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -33,6 +34,12 @@ const Home = () => {
 
     fetchMovies();
   }, []);
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return '';
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : url;
+  };
 
   return (
     <div className="home-page pb-5">
@@ -76,15 +83,13 @@ const Home = () => {
                   Book Tickets
                 </Link>
                 {featuredMovie.trailerUrl && (
-                  <a
-                    href={featuredMovie.trailerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setActiveTrailerUrl(featuredMovie.trailerUrl)}
                     className="btn btn-imovies-outline btn-lg px-4 d-flex align-items-center gap-2"
                   >
-                    <i className="bi bi-play-circle fs-5"></i>
+                    <i className="bi bi-play-circle fs-5 text-danger"></i>
                     Watch Trailer
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
@@ -194,6 +199,47 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* Interactive Trailer Modal */}
+      {activeTrailerUrl && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(5px)' }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content bg-dark border border-secondary text-white">
+              <div className="modal-header border-secondary py-2">
+                <h6 className="modal-title fw-bold">
+                  <i className="bi bi-youtube text-danger me-2"></i>
+                  {featuredMovie?.title} – Official Trailer
+                </h6>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setActiveTrailerUrl(null)}
+                ></button>
+              </div>
+              <div className="modal-body p-0" style={{ position: 'relative', paddingTop: '56.25%' }}>
+                <iframe
+                  src={getYouTubeEmbedUrl(activeTrailerUrl)}
+                  title="Movie Trailer"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 0
+                  }}
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
