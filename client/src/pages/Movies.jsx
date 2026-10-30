@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { movieService } from '../services/api';
 import MovieCard from '../components/MovieCard';
+import { fallbackMovies } from '../data/fallbackMovies';
 
 const Movies = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [movies, setMovies] = useState(fallbackMovies);
+  const [loading, setLoading] = useState(false);
 
-  // Filter lists
-  const [availableGenres, setAvailableGenres] = useState([]);
-  const [availableLanguages, setAvailableLanguages] = useState([]);
+  // Filter options
+  const [availableGenres, setAvailableGenres] = useState([
+    'All', 'Action', 'Sci-Fi', 'Adventure', 'Animation', 'Comedy', 'Drama', 'Crime', 'Biography'
+  ]);
+  const [availableLanguages, setAvailableLanguages] = useState(['All', 'English', 'Hindi']);
 
   // Active filters
   const search = searchParams.get('search') || '';
@@ -23,12 +26,12 @@ const Movies = () => {
     const fetchFilters = async () => {
       try {
         const res = await movieService.getFilters();
-        if (res.data) {
+        if (res.data && res.data.genres?.length > 0) {
           setAvailableGenres(['All', ...(res.data.genres || [])]);
           setAvailableLanguages(['All', ...(res.data.languages || [])]);
         }
       } catch (err) {
-        console.error('Failed to load filter metadata:', err);
+        // Keep defaults
       }
     };
     fetchFilters();
@@ -36,7 +39,6 @@ const Movies = () => {
 
   useEffect(() => {
     const fetchMovies = async () => {
-      setLoading(true);
       try {
         const params = {};
         if (search) params.search = search;
@@ -46,12 +48,38 @@ const Movies = () => {
         if (selectedSort) params.sort = selectedSort;
 
         const res = await movieService.getAll(params);
-        setMovies(res.data?.movies || []);
+        if (res.data?.movies && res.data.movies.length > 0) {
+          setMovies(res.data.movies);
+          return;
+        }
       } catch (err) {
-        console.error('Failed to fetch movies:', err);
-      } finally {
-        setLoading(false);
+        // Fallback filter
       }
+
+      // Apply client-side filtering on fallback dataset
+      let filtered = [...fallbackMovies];
+
+      if (search) {
+        filtered = filtered.filter(m => m.title.toLowerCase().includes(search.toLowerCase()));
+      }
+      if (selectedGenre && selectedGenre !== 'All') {
+        filtered = filtered.filter(m => m.genre?.some(g => g.toLowerCase() === selectedGenre.toLowerCase()));
+      }
+      if (selectedLanguage && selectedLanguage !== 'All') {
+        filtered = filtered.filter(m => m.language.toLowerCase() === selectedLanguage.toLowerCase());
+      }
+      if (selectedStatus && selectedStatus !== 'all') {
+        filtered = filtered.filter(m => m.status === selectedStatus);
+      }
+      if (selectedSort === 'rating') {
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else if (selectedSort === 'title') {
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+      } else {
+        filtered.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+      }
+
+      setMovies(filtered);
     };
 
     fetchMovies();
@@ -116,19 +144,9 @@ const Movies = () => {
               value={selectedGenre}
               onChange={(e) => updateFilter('genre', e.target.value)}
             >
-              {availableGenres.length > 0 ? (
-                availableGenres.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))
-              ) : (
-                <>
-                  <option value="All">All Genres</option>
-                  <option value="Action">Action</option>
-                  <option value="Sci-Fi">Sci-Fi</option>
-                  <option value="Drama">Drama</option>
-                  <option value="Comedy">Comedy</option>
-                </>
-              )}
+              {availableGenres.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
             </select>
           </div>
 
@@ -140,17 +158,9 @@ const Movies = () => {
               value={selectedLanguage}
               onChange={(e) => updateFilter('language', e.target.value)}
             >
-              {availableLanguages.length > 0 ? (
-                availableLanguages.map((l) => (
-                  <option key={l} value={l}>{l}</option>
-                ))
-              ) : (
-                <>
-                  <option value="All">All Languages</option>
-                  <option value="English">English</option>
-                  <option value="Hindi">Hindi</option>
-                </>
-              )}
+              {availableLanguages.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
             </select>
           </div>
 

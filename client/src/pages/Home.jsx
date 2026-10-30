@@ -2,13 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { movieService } from '../services/api';
 import MovieCard from '../components/MovieCard';
+import { fallbackMovies, fallbackTheatres } from '../data/fallbackMovies';
 
 const Home = () => {
-  const [nowShowing, setNowShowing] = useState([]);
-  const [upcoming, setUpcoming] = useState([]);
-  const [featuredMovie, setFeaturedMovie] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Pre-seed with fallback movies so the UI is immediately interactive
+  const defaultShowing = fallbackMovies.filter(m => m.status === 'now_showing');
+  const defaultUpcoming = fallbackMovies.filter(m => m.status === 'upcoming');
+
+  const [nowShowing, setNowShowing] = useState(defaultShowing);
+  const [upcoming, setUpcoming] = useState(defaultUpcoming);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [selectedGenre, setSelectedGenre] = useState('All');
   const [activeTrailerUrl, setActiveTrailerUrl] = useState(null);
+
+  // Top featured movies for hero slider
+  const featuredPool = nowShowing.slice(0, 4);
+  const activeHero = featuredPool[heroIndex] || featuredPool[0] || defaultShowing[0];
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -18,22 +27,39 @@ const Home = () => {
           movieService.getAll({ status: 'upcoming' })
         ]);
 
-        const showingMovies = resShowing.data?.movies || [];
-        setNowShowing(showingMovies);
-        setUpcoming(resUpcoming.data?.movies || []);
+        const showingMovies = resShowing.data?.movies;
+        const upcomingMovies = resUpcoming.data?.movies;
 
-        if (showingMovies.length > 0) {
-          setFeaturedMovie(showingMovies[0]);
+        if (showingMovies && showingMovies.length > 0) {
+          setNowShowing(showingMovies);
+        }
+        if (upcomingMovies && upcomingMovies.length > 0) {
+          setUpcoming(upcomingMovies);
         }
       } catch (err) {
-        console.error('Failed to load movies for home page:', err);
-      } finally {
-        setLoading(false);
+        // Keeps fallback movies if server is offline
+        console.log('Using default movie dataset');
       }
     };
 
     fetchMovies();
   }, []);
+
+  // Auto-slide hero banner every 6 seconds
+  useEffect(() => {
+    if (featuredPool.length <= 1) return;
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % featuredPool.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [featuredPool.length]);
+
+  const genres = ['All', 'Action', 'Sci-Fi', 'Adventure', 'Animation', 'Comedy', 'Drama', 'Crime'];
+
+  // Filter now showing by selected genre
+  const filteredShowing = selectedGenre === 'All'
+    ? nowShowing
+    : nowShowing.filter(m => m.genre?.some(g => g.toLowerCase() === selectedGenre.toLowerCase()));
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return '';
@@ -43,48 +69,59 @@ const Home = () => {
 
   return (
     <div className="home-page pb-5">
-      {/* Hero Banner Section */}
+      {/* Dynamic Hero Banner Slider */}
       <div className="container pt-4">
-        {featuredMovie ? (
+        {activeHero && (
           <div
-            className="hero-banner shadow-lg"
+            className="hero-banner shadow-lg position-relative"
             style={{
-              backgroundImage: `url(${featuredMovie.bannerUrl || featuredMovie.posterUrl})`
+              backgroundImage: `url(${activeHero.bannerUrl || activeHero.posterUrl})`,
+              minHeight: '500px',
+              transition: 'background-image 0.5s ease-in-out'
             }}
           >
             <div className="hero-overlay"></div>
             <div className="hero-content">
-              <span className="badge bg-danger text-uppercase px-3 py-2 mb-2 fw-bold">
-                Featured Blockbuster
-              </span>
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <span className="badge bg-danger text-uppercase px-3 py-1 fw-bold">
+                  Featured #{heroIndex + 1}
+                </span>
+                <span className="badge bg-dark border border-secondary text-white">
+                  IMAX & 3D
+                </span>
+              </div>
+
               <h1 className="display-4 fw-bold text-white mb-2">
-                {featuredMovie.title}
+                {activeHero.title}
               </h1>
-              <div className="d-flex align-items-center gap-3 text-secondary mb-3">
+
+              <div className="d-flex flex-wrap align-items-center gap-3 text-secondary mb-3">
                 <span className="badge-rating fs-6">
                   <i className="bi bi-star-fill text-warning me-1"></i>
-                  {featuredMovie.rating?.toFixed(1)} / 10
+                  {activeHero.rating?.toFixed(1)} / 10
                 </span>
-                <span>{featuredMovie.duration} mins</span>
+                <span><i className="bi bi-clock me-1 text-danger"></i>{activeHero.duration} mins</span>
                 <span>•</span>
-                <span>{featuredMovie.language}</span>
+                <span>{activeHero.language}</span>
                 <span>•</span>
-                <span className="badge bg-dark border border-secondary">{featuredMovie.certificate || 'UA'}</span>
+                <span className="badge bg-dark border border-secondary">{activeHero.certificate || 'UA'}</span>
               </div>
+
               <p className="text-light mb-4 text-truncate-3" style={{ fontSize: '1.05rem', lineHeight: '1.6' }}>
-                {featuredMovie.description}
+                {activeHero.description}
               </p>
-              <div className="d-flex gap-3 flex-wrap">
+
+              <div className="d-flex gap-3 flex-wrap align-items-center">
                 <Link
-                  to={`/movies/${featuredMovie._id}`}
+                  to={`/movies/${activeHero._id}`}
                   className="btn btn-imovies btn-lg px-4 d-flex align-items-center gap-2"
                 >
                   <i className="bi bi-ticket-perforated-fill fs-5"></i>
                   Book Tickets
                 </Link>
-                {featuredMovie.trailerUrl && (
+                {activeHero.trailerUrl && (
                   <button
-                    onClick={() => setActiveTrailerUrl(featuredMovie.trailerUrl)}
+                    onClick={() => setActiveTrailerUrl(activeHero.trailerUrl)}
                     className="btn btn-imovies-outline btn-lg px-4 d-flex align-items-center gap-2"
                   >
                     <i className="bi bi-play-circle fs-5 text-danger"></i>
@@ -93,110 +130,146 @@ const Home = () => {
                 )}
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="p-5 text-center bg-dark rounded-4 mb-4 border border-secondary">
-            <h2 className="text-white">Welcome to IMovies</h2>
-            <p className="text-secondary">Your premier destination for movie ticket bookings</p>
+
+            {/* Carousel navigation dots */}
+            <div className="position-absolute bottom-0 end-0 p-4 d-flex gap-2 z-3">
+              {featuredPool.map((m, idx) => (
+                <button
+                  key={m._id}
+                  onClick={() => setHeroIndex(idx)}
+                  className={`btn p-0 rounded-pill transition-all ${
+                    idx === heroIndex ? 'bg-danger' : 'bg-secondary bg-opacity-50'
+                  }`}
+                  style={{
+                    width: idx === heroIndex ? '30px' : '10px',
+                    height: '10px',
+                    border: 'none'
+                  }}
+                  title={m.title}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Now Showing Movies Section */}
+      {/* Live Statistics Ribbon */}
+      <div className="container my-4">
+        <div className="row g-3 text-center text-white py-3 px-2 rounded-4 border border-secondary" style={{ backgroundColor: '#10131c' }}>
+          <div className="col-6 col-md-3 border-end border-secondary border-opacity-25">
+            <h4 className="fw-bold text-danger mb-0">12+</h4>
+            <span className="text-secondary small">Blockbuster Movies</span>
+          </div>
+          <div className="col-6 col-md-3 border-end border-secondary border-opacity-25">
+            <h4 className="fw-bold text-danger mb-0">5 Cities</h4>
+            <span className="text-secondary small">Top Cinema Hubs</span>
+          </div>
+          <div className="col-6 col-md-3 border-end border-secondary border-opacity-25">
+            <h4 className="fw-bold text-danger mb-0">4DX & IMAX</h4>
+            <span className="text-secondary small">Laser 3D Screens</span>
+          </div>
+          <div className="col-6 col-md-3">
+            <h4 className="fw-bold text-success mb-0">Instant</h4>
+            <span className="text-secondary small">Digital Entry & M-Tickets</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Now Showing Section with Interactive Genre Tabs */}
       <div className="container my-5">
-        <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
           <div>
             <h2 className="text-white fw-bold mb-1">
-              <span className="text-danger me-2">●</span>Now Showing
+              <span className="text-danger me-2">●</span>Now Showing in Cinemas
             </h2>
-            <p className="text-secondary small mb-0">Catch the hottest films currently in theatres</p>
+            <p className="text-secondary small mb-0">Select a film to choose your theatre, date, and seats</p>
           </div>
-          <Link to="/movies?status=now_showing" className="btn btn-sm btn-outline-danger">
+          <Link to="/movies?status=now_showing" className="btn btn-sm btn-outline-danger align-self-start align-self-md-auto">
             View All ({nowShowing.length}) <i className="bi bi-chevron-right ms-1"></i>
           </Link>
         </div>
 
-        {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-danger" role="status"></div>
-            <p className="text-secondary mt-2">Loading films...</p>
-          </div>
-        ) : nowShowing.length === 0 ? (
-          <div className="text-center py-5 text-secondary">
-            <p>No currently running movies found. Seed the database to load movies.</p>
+        {/* Interactive Genre Filter Pills */}
+        <div className="d-flex gap-2 overflow-auto pb-3 mb-4">
+          {genres.map((g) => (
+            <button
+              key={g}
+              onClick={() => setSelectedGenre(g)}
+              className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition-all ${
+                selectedGenre === g
+                  ? 'btn-danger shadow'
+                  : 'btn-dark border border-secondary text-secondary'
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+
+        {filteredShowing.length === 0 ? (
+          <div className="p-4 text-center bg-dark rounded-4 border border-secondary text-secondary">
+            No movies found in this genre. Try selecting 'All'.
           </div>
         ) : (
           <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            {nowShowing.map((movie) => (
+            {filteredShowing.map((movie) => (
               <MovieCard key={movie._id} movie={movie} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Upcoming Movies Section */}
+      {/* Upcoming Releases Section */}
       <div className="container my-5">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h2 className="text-white fw-bold mb-1">
-              <span className="text-warning me-2">●</span>Coming Soon
+              <span className="text-warning me-2">●</span>Coming Soon to IMovies
             </h2>
-            <p className="text-secondary small mb-0">Anticipated blockbusters arriving soon</p>
+            <p className="text-secondary small mb-0">Anticipated blockbusters arriving in theatres soon</p>
           </div>
           <Link to="/movies?status=upcoming" className="btn btn-sm btn-outline-warning">
-            View Upcoming <i className="bi bi-chevron-right ms-1"></i>
+            All Upcoming <i className="bi bi-chevron-right ms-1"></i>
           </Link>
         </div>
 
-        {upcoming.length > 0 && (
-          <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            {upcoming.map((movie) => (
-              <MovieCard key={movie._id} movie={movie} />
-            ))}
-          </div>
-        )}
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+          {upcoming.map((movie) => (
+            <MovieCard key={movie._id} movie={movie} />
+          ))}
+        </div>
       </div>
 
-      {/* Cinema Experience Banner */}
+      {/* Premium Partner Theatres Showcase */}
       <div className="container my-5">
-        <div className="p-4 p-md-5 rounded-4 border border-secondary" style={{ backgroundColor: '#131620' }}>
-          <div className="row g-4 align-items-center">
-            <div className="col-md-7">
-              <span className="badge bg-danger mb-2">IMAX & Dolby Atmos</span>
-              <h3 className="text-white fw-bold mb-3">Cinema Experience Like Never Before with IMovies</h3>
-              <p className="text-secondary mb-4">
-                Select your favorite recliner seats, choose your preferred audio format, and enjoy crystal-clear projection with zero wait times and paperless digital entry.
-              </p>
-              <div className="row g-3 text-white">
-                <div className="col-6 col-sm-4">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-shield-check text-danger fs-4"></i>
-                    <span className="small fw-semibold">Instant Ticket</span>
-                  </div>
+        <div className="border-bottom border-secondary pb-3 mb-4">
+          <h3 className="text-white fw-bold mb-1">
+            <i className="bi bi-buildings text-danger me-2"></i>Partner Multiplexes & Theatres
+          </h3>
+          <p className="text-secondary small mb-0">Experience laser projection and Dolby Atmos sound across top cinema complexes</p>
+        </div>
+
+        <div className="row g-3">
+          {fallbackTheatres.map((t) => (
+            <div key={t.id} className="col-md-6 col-lg-4">
+              <div className="p-3 rounded-4 border border-secondary h-100" style={{ backgroundColor: '#131620' }}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <span className="badge bg-danger">{t.city}</span>
+                  <span className="badge bg-dark border border-secondary text-warning" style={{ fontSize: '0.7rem' }}>
+                    {t.badge}
+                  </span>
                 </div>
-                <div className="col-6 col-sm-4">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-cash-stack text-danger fs-4"></i>
-                    <span className="small fw-semibold">Easy Refund</span>
-                  </div>
-                </div>
-                <div className="col-6 col-sm-4">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-headset text-danger fs-4"></i>
-                    <span className="small fw-semibold">24/7 Support</span>
-                  </div>
+                <h6 className="text-white fw-bold mb-2">{t.name}</h6>
+                <div className="d-flex flex-wrap gap-1 mt-2">
+                  {t.formats.map((f, i) => (
+                    <span key={i} className="badge bg-black border border-secondary text-secondary" style={{ fontSize: '0.7rem' }}>
+                      {f}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
-            <div className="col-md-5 text-center">
-              <img
-                src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=700&q=80"
-                alt="Cinema Hall"
-                className="img-fluid rounded-4 shadow"
-                style={{ maxHeight: '240px', objectFit: 'cover', width: '100%' }}
-              />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -212,7 +285,7 @@ const Home = () => {
               <div className="modal-header border-secondary py-2">
                 <h6 className="modal-title fw-bold">
                   <i className="bi bi-youtube text-danger me-2"></i>
-                  {featuredMovie?.title} – Official Trailer
+                  Official HD Movie Trailer
                 </h6>
                 <button
                   type="button"
